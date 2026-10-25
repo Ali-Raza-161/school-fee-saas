@@ -1,0 +1,165 @@
+// Multi-School Fee Management SaaS — Prisma schema.
+// Production target: PostgreSQL (Neon/Supabase). Local demo: SQLite.
+// Switch provider to "postgresql" and set DATABASE_URL to a Postgres URL
+// for production; the model fields are intentionally Postgres-compatible.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Plan {
+  id           String   @id @default(cuid())
+  name         String
+  maxStudents  Int
+  price        Int      // PKR per month, example prices from the v1 doc
+  schools      School[]
+}
+
+model School {
+  id        String   @id @default(cuid())
+  name      String
+  address   String   @default("")
+  phone     String   @default("")
+  planId    String?
+  plan      Plan?    @relation(fields: [planId], references: [id])
+  status    String   @default("active") // active | suspended
+  createdAt DateTime @default(now())
+  users     User[]
+  classes   Class[]
+  parents   Parent[]
+  students  Student[]
+  feeHeads  FeeHead[]
+  structures FeeStructure[]
+  discounts Discount[]
+  vouchers  Voucher[]
+  payments  Payment[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  schoolId     String?
+  school       School?  @relation(fields: [schoolId], references: [id])
+  name         String
+  email        String   @unique
+  phone        String   @default("")
+  passwordHash String
+  // super_admin | school_admin | accountant | parent
+  role         String
+  createdAt    DateTime @default(now())
+}
+
+model Class {
+  id       String    @id @default(cuid())
+  schoolId String
+  school   School    @relation(fields: [schoolId], references: [id])
+  name     String
+  section  String    @default("A")
+  students Student[]
+  structures FeeStructure[]
+}
+
+model Parent {
+  id       String    @id @default(cuid())
+  schoolId String
+  school   School    @relation(fields: [schoolId], references: [id])
+  name     String
+  phone    String    @default("")
+  email    String    @default("")
+  address  String    @default("")
+  students Student[]
+}
+
+model Student {
+  id            String    @id @default(cuid())
+  schoolId      String
+  school        School    @relation(fields: [schoolId], references: [id])
+  classId       String
+  class         Class     @relation(fields: [classId], references: [id])
+  parentId      String?
+  parent        Parent?   @relation(fields: [parentId], references: [id])
+  name          String
+  rollNo        String    @default("")
+  admissionDate DateTime  @default(now())
+  status        String    @default("active")
+  discounts     Discount[]
+  vouchers      Voucher[]
+}
+
+model FeeHead {
+  id       String    @id @default(cuid())
+  schoolId String
+  school   School    @relation(fields: [schoolId], references: [id])
+  name     String    // tuition, admission, exam, transport, lab, annual
+  type     String    @default("monthly") // monthly | one-time
+  structures FeeStructure[]
+}
+
+model FeeStructure {
+  id        String  @id @default(cuid())
+  schoolId  String
+  school    School  @relation(fields: [schoolId], references: [id])
+  classId   String
+  class     Class   @relation(fields: [classId], references: [id])
+  feeHeadId String
+  feeHead   FeeHead @relation(fields: [feeHeadId], references: [id])
+  amount    Int
+}
+
+model Discount {
+  id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  type      String   // sibling | scholarship | staff_child | custom
+  amount    Int      @default(0) // fixed PKR, used when percentage is 0
+  percentage Int     @default(0) // percent, used when > 0
+  reason    String   @default("")
+}
+
+model Voucher {
+  id          String   @id @default(cuid())
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id])
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  month       Int
+  year        Int
+  totalAmount Int
+  discount    Int      @default(0)
+  fine        Int      @default(0)
+  arrears     Int      @default(0)
+  payable     Int
+  paid        Int      @default(0)
+  status      String   @default("unpaid") // unpaid | partial | paid
+  dueDate     DateTime
+  payments    Payment[]
+  @@unique([studentId, month, year])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  schoolId    String
+  school     School   @relation(fields: [schoolId], references: [id])
+  voucherId   String
+  voucher     Voucher  @relation(fields: [voucherId], references: [id])
+  amount      Int
+  method      String   // cash | bank_transfer | jazzcash | easypaisa
+  referenceNo String   @default("")
+  receivedBy  String   @default("")
+  paidAt      DateTime @default(now())
+  isReversed  Boolean  @default(false)
+  receiptNo   String   @unique @default(cuid())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  schoolId  String
+  action    String
+  detail    String   @default("")
+  createdAt DateTime @default(now())
+}

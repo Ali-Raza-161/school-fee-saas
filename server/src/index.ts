@@ -1,0 +1,14 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import { api } from './routes/api';
+import { errorHandler } from './middleware/errorHandler';
+const app = express();
+app.use(helmet());
+app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }));
+app.use(express.json({ limit: '2mb' }));
+app.use('/api', api);
+app.use(errorHandler);
+const port = Number(process.env.PORT || 4000);
+if (require.main === module) app.listen(port, () => console.log(`School Fee SaaS backend listening on http://localhost:${port}`));
+export default app;

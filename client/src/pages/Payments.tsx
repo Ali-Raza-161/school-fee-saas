@@ -1,0 +1,9 @@
+import { useEffect, useState } from 'react';
+import { get, post } from '../services/api';
+import { DataTable } from '../components/DataTable';
+import { ReceiptPreview } from '../components/ReceiptPreview';
+export function Payments() {
+  const [rows, setRows] = useState<any[]>([]); const [voucherId, setVoucherId] = useState(''); const [amount, setAmount] = useState(''); const [method, setMethod] = useState('cash');
+  useEffect(() => { get('/payments').then(setRows).catch(() => setRows([])); }, []);
+  return <div className="p-6"><h1 className="text-2xl font-bold mb-4">Payments</h1><div className="flex gap-2 mb-4 flex-wrap"><input className="border rounded px-2 py-1" placeholder="Voucher ID" value={voucherId} onChange={(e) => setVoucherId(e.target.value)} /><input className="border rounded px-2 py-1" placeholder="Amount PKR" value={amount} onChange={(e) => setAmount(e.target.value)} /><select className="border rounded px-2 py-1" value={method} onChange={(e) => setMethod(e.target.value)}><option value="cash">cash</option><option value="bank_transfer">bank transfer</option><option value="jazzcash">JazzCash</option><option value="easypaisa">Easypaisa</option></select><button className="bg-blue-600 text-white rounded px-3" onClick={async () => { await post('/payments', { voucherId, amount: Number(amount), method }); window.location.reload(); }}>Record payment</button></div><p className="text-sm mb-3 text-slate-600">Partial and advance payments are supported. Payments are never deleted — use the reverse API endpoint to mark one reversed, with an audit trail.</p><DataTable columns={['Receipt', 'Amount', 'Method', 'Reversed']} rows={rows.map((p: any) => [p.receiptNo, p.amount, p.method, p.isReversed ? 'Yes' : 'No'])} />{rows[0] && <div className="mt-4"><ReceiptPreview p={rows[0]} /></div>}</div>;
+}
