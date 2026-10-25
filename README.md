@@ -322,6 +322,17 @@ access, PostgreSQL with Prisma, PDF generation and a subscription business
 model, which makes it a strong portfolio project and a realistic product
 idea.
 
+## Screenshots
+
+![Home page](docs/screenshots/home.png)
+![Login page](docs/screenshots/login.png)
+![Dashboard](docs/screenshots/dashboard.png)
+![Students page](docs/screenshots/students.png)
+![Vouchers page](docs/screenshots/vouchers.png)
+![Payments page](docs/screenshots/payments.png)
+![Reports page](docs/screenshots/reports.png)
+![Super Admin page](docs/screenshots/super-admin.png)
+
 ## Demo notes (read before showing this to anyone)
 
 - **Prisma engine limitation in this VM:** `npx prisma generate` fails here
